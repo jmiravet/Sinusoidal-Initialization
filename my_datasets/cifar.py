@@ -26,8 +26,6 @@ def load_cifar10(batch_size=64, size=32, n_samples=None):
     download = not os.path.isdir("./data/cifar-10-batches-py")
     # Datasets
     trainset = torchvision.datasets.CIFAR10(root='./data', train=True, download=download, transform=train_transform)
-    if n_samples is not None:
-        trainset = get_reduced_dataset(trainset, n_samples)
     testset = torchvision.datasets.CIFAR10(root='./data', train=False, download=download, transform=test_transform)
     # Dataloaders
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=True, num_workers=2)
@@ -57,8 +55,6 @@ def load_cifar100(batch_size=64, size=32, n_samples=None):
     download = not os.path.isdir("./data/cifar-100-batches-py")
     # Datasets
     trainset = torchvision.datasets.CIFAR100(root='./data', train=True, download=download, transform=train_transform)
-    if n_samples is not None:
-        trainset = get_reduced_dataset(trainset, n_samples)
     testset = torchvision.datasets.CIFAR100(root='./data', train=False, download=download, transform=test_transform)
     # Dataloaders
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=True, num_workers=2)

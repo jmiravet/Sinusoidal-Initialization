@@ -40,7 +40,27 @@ def initialize_conv(weight):
     weight = torch.from_numpy(weight)
     return weight
 
-def fernandez_initialization(module):
+def initialize_conv2(weight):
+    # A: amplitud, l: longitud de onda, d: desplazamiento
+    c_out, c_in, h, w = weight.shape
+    n_in = c_in*h*w
+    weight = np.empty((c_out, n_in), dtype=np.float32)
+    position = np.arange(c_out) 
+    for i in range(n_in):
+        l = ((i+1) * 2*np.pi / n_in)
+        d = np.random.rand() * 2 * np.pi
+        i_position = position * l + d
+        weight[:,i] = np.sin(i_position)
+    
+    var = np.var(weight, ddof=1)
+    a = np.sqrt(2/(var * (n_in+c_out)))
+    weight = weight * a
+    weight = weight.reshape((c_out, c_in, h, w))
+
+    weight = torch.from_numpy(weight)
+    return weight
+
+def fernandez_sinusoidal(module):
     if isinstance(module, nn.Linear):
         module.weight.data = initialize_linear(module.weight)
         if module.bias is not None:
@@ -50,6 +70,15 @@ def fernandez_initialization(module):
         if module.bias is not None:
             module.bias.data.fill_(0.0)
 
+def fernandez_sinusoidal2(module):
+    if isinstance(module, nn.Linear):
+        module.weight.data = initialize_linear(module.weight)
+        if module.bias is not None:
+            module.bias.data.fill_(0.0)
+    elif isinstance(module, nn.Conv2d):
+        module.weight.data = initialize_conv2(module.weight)
+        if module.bias is not None:
+            module.bias.data.fill_(0.0)
 
 def default_initialization(module):
     pass

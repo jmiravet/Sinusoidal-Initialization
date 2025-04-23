@@ -6,54 +6,66 @@ import numpy as np
 
 from common import *
 from initialize import *
-from datasets.cifar import load_cifar100
-from models.lenet import lenet5
-from models.resnet50 import resnet50
+from my_datasets import *
+from models import *
 
-EPOCHS = 100
+EPOCHS = 300
 LR = 0.001
 
 def main():
-    sys.stdout = Logger("./results/output.log")
-
+    # dataset_name = cifar100 tiny-imagenet tiny-imagenet imagenet1k wikitext
+    # model_name =   resnet50 mobilenet     efficientnet  vit        roberta
+    # for optimizer in [optim.SGD, optim.Adam, optim.AdamW]:
+    # for initialization_name in ["fernandez", "default"]:
+    dataset_name = "imagenet1k"
+    model_name = "vit"
+    optimizer = optim.SGD
     initialization_name = "fernandez"
-    dataset_name = "cifar100"
-    model_name = "resnet50"
+    
+    output_file = f"./results/output{dataset_name}-{model_name}-{initialization_name}-{optimizer.__name__}.log"
+    sys.stdout = Logger(output_file)
+    print(f"{model_name}; {dataset_name}; {initialization_name}; {optimizer.__name__}", flush=True)
 
-    for initialization_name in ["fernandez", "default"]:
-        for optimizer in [optim.SGD, optim.Adam, optim.AdamW]:
-            if initialization_name == "fernandez":
-                initialization = fernandez_initialization
-            else:
-                initialization = default_initialization        
-            if dataset_name == "cifar100": 
-                dataset = load_cifar100
-            if model_name == "resnet50":
-                model = resnet50
-            elif model_name == "lenet5":
-                model = lenet5
+    if initialization_name == "fernandez":
+        initialization = fernandez_sinusoidal
+    else:
+        initialization = default_initialization  
+    if dataset_name == "cifar100": 
+        dataset = load_cifar100
+    elif dataset_name == "tiny-imagenet":
+        dataset = load_tinyimagenet
+    elif dataset_name == "imagenet1k":
+        dataset = load_imagenet1k
+    if model_name == "resnet50":
+        model = load_resnet50
+    elif model_name == "mobilenet":
+        model = load_mobilenet
+    elif model_name == "efficientnet":
+        model = load_efficientnet
+    elif model_name == "vit":
+        model = load_vit
+    elif model_name == "lenet5":
+        model = load_lenet5
 
+    # Load data
+    train_loader, test_loader, input_shape, num_classes = dataset(size=224)
 
-            print(f"{model_name}; {dataset_name}; {initialization_name}; {optimizer.__name__}", flush=True)
-            # Load data
-            train_loader, test_loader, input_shape, num_classes = dataset(size=256)
+    # Create model and initialize weights 
+    model = model(input_shape, num_classes)
+    # Initialize
+    model.apply(initialization)  # Apply custom initialization
 
-            for iteration in range(1):
-                # Create model and initialize weights 
-                model = resnet50(input_shape, num_classes)
-                # Initialize
-                model.apply(initialization)  # Apply custom initialization
-
-                # Train
-                model = Model(predefined_model=model)
-                model.compile(
-                    loss=nn.CrossEntropyLoss(), 
-                    optimizer=optimizer, 
-                    optimizer_params = {"lr": 0.001, "weight_decay": 0.001},
-                    metrics=Accuracy())
-                model.add_callback([{"type": "early_stopping", "patience": 10, "delta": 0.005}])
-                history = model.train_model(train_loader, test_loader, num_epochs=EPOCHS, verbose=True)
-                print(history)
+    # Train
+    #model = torch.compile(model)
+    model = Model(predefined_model=model)
+    model.compile(
+        loss=nn.CrossEntropyLoss(), 
+        optimizer=optimizer, 
+        optimizer_params = {"lr": 0.001, "weight_decay": 0.001},
+        metrics=Accuracy())
+    #model.add_callback([EarlyStopping(patience=50, delta=0)])
+    history = model.train_model(train_loader, test_loader, num_epochs=EPOCHS, verbose=True)
+    print(history)
 
 
 if __name__ == '__main__':

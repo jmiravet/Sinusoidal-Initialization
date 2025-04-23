@@ -33,6 +33,6 @@ class LeNet5(nn.Module):
         out = self.classification(x)
         return out
     
-def lenet5():
+def load_lenet5():
     model = LeNet5(input_shape=(3,256,256), num_classes=100)
     return model

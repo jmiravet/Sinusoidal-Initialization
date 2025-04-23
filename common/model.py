@@ -161,9 +161,9 @@ class Model(nn.Module):
             actual_lr = self.optimizer.param_groups[0]['lr']
             # Train
             if epoch == 0:
-                self.train_loss = self.training_one_epoch(train_data,num_epochs, epoch, verbose=True)
+                self.train_loss = self.training_one_epoch(train_data, num_epochs, epoch, verbose=True)
             else:
-                self.train_loss = self.training_one_epoch(train_data,num_epochs, epoch, verbose=False)
+                self.train_loss = self.training_one_epoch(train_data, num_epochs, epoch, verbose=False)
             # Evaluate
             val_info = self.evaluate_model(val_data, verbose=False)
             self.val_loss = val_info["loss"]
