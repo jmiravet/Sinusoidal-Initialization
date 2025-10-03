@@ -1,9 +1,11 @@
 import sys
+import os
 
 class Logger:
     def __init__(self, filename):
         self.terminal = sys.stdout
-        self.log = open(filename, "a")  # Append mode
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
+        self.log = open(filename, "a")
 
     def write(self, message):
         self.terminal.write(message)
