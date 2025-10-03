@@ -1,6 +1,7 @@
 import torch
-import torch.nn as nn
+from torch import nn, Tensor
 import torchvision
+
 
 def load_mobilenet(input_shape, num_classes):
     model = torchvision.models.mobilenet_v3_small()

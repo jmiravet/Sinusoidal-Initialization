@@ -11,14 +11,50 @@ import torch
 import sys
 from initialize import *
 from common.logger import *
+from lsuv import lsuv_with_dataloader
 
-def compute_metrics(eval_pred):
+def compute_metrics_1(eval_pred):
     logits, labels = eval_pred
     predictions = np.argmax(logits, axis=-1)
     masked_positions = labels != -100
     correct = (predictions == labels) & masked_positions
     accuracy = correct.sum().item() / masked_positions.sum().item()
     return {"masked_lm_accuracy": accuracy}
+
+@torch.no_grad()
+def compute_metrics(eval_pred):
+    """
+    Hugging Face `Trainer` callback to compute MLM metrics.
+
+    Parameters
+    ----------
+    eval_pred : Tuple[np.ndarray, np.ndarray]
+        * logits – shape (batch, seq_len, vocab_size)
+        * labels – shape (batch, seq_len) with -100 in positions that should be ignored
+    """
+    # HF passes NumPy arrays ⟶ convert to tensors (stay on CPU: metrics don’t need GPU)
+    logits_np, labels_np = eval_pred
+    logits: torch.Tensor = torch.from_numpy(logits_np)
+    labels: torch.Tensor = torch.from_numpy(labels_np)
+
+    # ── Masked‑token accuracy ────────────────────────────────────────────
+    preds = logits.argmax(dim=-1)          # (B, L) ‑ tensor
+    mask  = labels != -100                 # bool mask of valid positions
+    accuracy = (preds.eq(labels) & mask).sum().float() / mask.sum()
+
+    # ── Mask‑aware cross‑entropy loss → perplexity ───────────────────────
+    loss = torch.nn.functional.cross_entropy(
+        logits.view(-1, logits.size(-1)),  # (B·L, V)
+        labels.view(-1),                   # (B·L,)
+        ignore_index=-100,
+        reduction="mean",
+    )
+    perplexity = torch.exp(loss)
+
+    return {
+        "masked_lm_accuracy":   accuracy.item(),
+        "masked_lm_perplexity": perplexity.item(),
+    }
 
 def group_texts(examples):
     block_size = 128
@@ -31,18 +67,15 @@ def group_texts(examples):
 
 def main():
     # for optimizer in [sgd, adamw_torch]:
-    # for initialization_name in ["fernandez", "default"]:
-    optimizer = "sgd"
-    initialization_name = "fernandez"
-    if initialization_name == "fernandez":
-        initialization = fernandez_sinusoidal
-    else:
-        initialization = default_initialization  
+    # for initialization in [fernandez_sinusoidal3, default_initialization, orthogonal, lsuv_with_dataloader]:
+    optimizer = "adamw_torch"
+    initialization = lsuv_with_dataloader  
     
         
-    output_file = f"./results/outputwikitextbert-{initialization_name}-{optimizer}.log"
+    output_file = f"./results/outputwikitextbert-{initialization.__name__}-{optimizer}.log"
     sys.stdout = Logger(output_file)
-    print(f"wikitext; bert; {initialization_name}; {optimizer}", flush=True)
+    print(f"wikitext; bert; {initialization.__name__}; {optimizer}", flush=True)
+    
 
     # Step 1: Load WikiText-2
     dataset = load_dataset("wikitext", "wikitext-2-raw-v1")
@@ -76,11 +109,19 @@ def main():
 
     # Step 7: Initialize model from config (no pretrained weights!)
     model = BertForMaskedLM(config)
-    model.apply(initialization)  # Apply custom initialization
+    print(model)
+    exit()
+    if initialization.__name__ == "lsuv_with_dataloader":
+        pass
+    else:
+        model.apply(initialization)  # Apply custom initialization
+
+    print(model)
+    exit()
 
     # Step 8: Training arguments
     training_args = TrainingArguments(
-        num_train_epochs=500,
+        num_train_epochs=200,
         per_device_train_batch_size=16,
         eval_strategy="epoch",
         save_strategy="no",
@@ -93,6 +134,20 @@ def main():
         weight_decay=0.001,
         lr_scheduler_type = "constant",
     )
+
+    # Step 9: Trainer
+    trainer = Trainer(
+        model=model,
+        args=training_args,
+        train_dataset=lm_dataset["train"],
+        eval_dataset=lm_dataset["validation"],
+        processing_class=tokenizer,
+        data_collator=data_collator,
+        compute_metrics=compute_metrics,
+    )
+    
+    dataloader = trainer.get_eval_dataloader(lm_dataset["validation"])
+    model = lsuv_with_dataloader(model, dataloader)
 
     # Step 9: Trainer
     trainer = Trainer(

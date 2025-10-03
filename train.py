@@ -8,28 +8,22 @@ from common import *
 from initialize import *
 from my_datasets import *
 from models import *
+from lsuv import lsuv_with_dataloader
 
-EPOCHS = 300
+EPOCHS = 100
 LR = 0.001
 
 def main():
     # dataset_name = cifar100 tiny-imagenet tiny-imagenet imagenet1k wikitext
     # model_name =   resnet50 mobilenet     efficientnet  vit        roberta
     # for optimizer in [optim.SGD, optim.Adam, optim.AdamW]:
-    # for initialization_name in ["fernandez", "default"]:
-    dataset_name = "imagenet1k"
-    model_name = "vit"
-    optimizer = optim.SGD
-    initialization_name = "fernandez"
+    # for initialization_name in [fernandez_sinusoidal3, default_initialization, orthogonal, lsuv_with_dataloader]:
+    dataset_name = "cifar100"
+    model_name = "resnet50"
+    optimizer = optim.AdamW
+    initialization = fernandez_sinusoidal_random
+    #initialization = zero
     
-    output_file = f"./results/output{dataset_name}-{model_name}-{initialization_name}-{optimizer.__name__}.log"
-    sys.stdout = Logger(output_file)
-    print(f"{model_name}; {dataset_name}; {initialization_name}; {optimizer.__name__}", flush=True)
-
-    if initialization_name == "fernandez":
-        initialization = fernandez_sinusoidal
-    else:
-        initialization = default_initialization  
     if dataset_name == "cifar100": 
         dataset = load_cifar100
     elif dataset_name == "tiny-imagenet":
@@ -47,13 +41,20 @@ def main():
     elif model_name == "lenet5":
         model = load_lenet5
 
+    output_file = f"./results/output{dataset_name}-{model_name}-{initialization.__name__}-{optimizer.__name__}.log"
+    sys.stdout = Logger(output_file)
+    print(f"{model_name}; {dataset_name}; {initialization.__name__}; {optimizer.__name__}", flush=True)
+
     # Load data
     train_loader, test_loader, input_shape, num_classes = dataset(size=224)
 
     # Create model and initialize weights 
     model = model(input_shape, num_classes)
     # Initialize
-    model.apply(initialization)  # Apply custom initialization
+    if initialization.__name__ == "lsuv_with_dataloader":
+        model = lsuv_with_dataloader(model, train_loader)
+    else:
+        model.apply(initialization)  # Apply custom initialization
 
     # Train
     #model = torch.compile(model)

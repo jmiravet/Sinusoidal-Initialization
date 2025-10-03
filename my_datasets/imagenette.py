@@ -3,7 +3,7 @@ import torchvision
 import torchvision.transforms as transforms
 
 
-def load_imagenette(batch_size=64, size=256):
+def load_imagenette(batch_size=64, size=224):
     transform = transforms.Compose([
         transforms.Resize((size, size)),
         transforms.ToTensor(),  # Convert images to PyTorch tensors

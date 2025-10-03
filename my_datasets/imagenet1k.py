@@ -23,7 +23,7 @@ def load_imagenet1k(batch_size=64, size=224, n_samples=None):
     def collate_fn(batch):
         return tuple(zip(*batch))
     
-    if not os.path.isdir("/scratch1/jmiravet/imagenet1k/"):
+    if not os.path.isdir("/scratch/imagenet1k/"):
         download_imagenet1k()
 
     # Transformations
@@ -36,10 +36,10 @@ def load_imagenet1k(batch_size=64, size=224, n_samples=None):
 
     num_classes = 1000
     # Datasets
-    trainset = torchvision.datasets.ImageNet(root="/scratch1/jmiravet/imagenet1k/", split="train", transform=transform)
+    trainset = torchvision.datasets.ImageNet(root="/scratch/imagenet1k/", split="train", transform=transform)
     if n_samples is not None:
         trainset = get_reduced_dataset(trainset, n_samples)
-    testset = torchvision.datasets.ImageNet(root="/scratch1/jmiravet/imagenet1k/", split="val", transform=transform)
+    testset = torchvision.datasets.ImageNet(root="/scratch/imagenet1k/", split="val", transform=transform)
     # Dataloaders
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=True, num_workers=4) #, collate_fn=collate_fn)
     testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size, shuffle=False, num_workers=4) #, collate_fn=collate_fn)
