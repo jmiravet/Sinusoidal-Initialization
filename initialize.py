@@ -1,12 +1,19 @@
 import math
-from typing import Optional as _Optional
+from typing import Optional as _Optional, Literal
 
 import torch
 import torch.nn as nn
 from torch import Tensor
+from torch.nn.init import _calculate_correct_fan
+
+
+_FanMode = Literal["fan_in", "fan_out"]
 
 def sinusoidal_(
     tensor: Tensor,
+    a: float = 0,
+    mode: _FanMode = "fan_in",
+    gain: float = math.sqrt(2.0),
     generator: _Optional[torch.Generator] = None,
 ) -> Tensor:
     r"""Fill the input `Tensor` with sinusoidal patterns for structured initialization.
@@ -23,10 +30,21 @@ def sinusoidal_(
     interpretability in early training stages.
 
     Args:
-        tensor: an n-dimensional `torch.Tensor`
+        tensor: an n-dimensional :class:`~torch.Tensor` to be filled in-place.
             - For Linear layers: shape ``(out_features, in_features)``
-            - For Conv layers: shape ``(out_channels, in_channels, kernel_height, kernel_width)``
-        generator: the torch Generator to sample from (default: None)
+            - For Conv layers: shape ``(out_channels, in_channels, kH, kW)``
+        a (float): the negative slope of the rectifier used after this layer 
+            (only relevant when computing gain for leaky ReLU). Default: 0.
+        mode (str): either ``'fan_in'`` (default) or ``'fan_out'``. 
+            ``'fan_in'`` preserves forward activation variance, while 
+            ``'fan_out'`` preserves gradient variance.
+        gain (float): scaling factor applied to match the expected variance under
+            the following nonlinearity. Default: ``sqrt(2.0)``.
+        generator (:class:`~torch.Generator`, optional): random number generator used 
+            for stochastic components of the sinusoidal pattern (if any). Default: ``None``.
+
+    Returns:
+        The input tensor, filled in-place.
 
     Examples:
         >>> w = torch.empty(3, 5)
@@ -62,7 +80,8 @@ def sinusoidal_(
 
         # Normalize amplitude
         var = torch.var(weights, unbiased=True)
-        amplitude = math.sqrt(2.0 / (var.item() * (n_in + n_out)))
+        fan = _calculate_correct_fan(tensor, mode)
+        amplitude = gain / math.sqrt(var.item() * fan)
         weights = weights * amplitude
 
         # Reshape for conv layers if needed
