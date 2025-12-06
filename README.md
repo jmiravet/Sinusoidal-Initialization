@@ -30,6 +30,7 @@ Supported layers:
 
 - `nn.Linear`
 - `nn.Conv1d`, `nn.Conv2d`, `nn.Conv3d`
+- `nn.MultiheadAttention`
 
 ---
 

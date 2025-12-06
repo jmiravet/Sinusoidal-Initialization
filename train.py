@@ -7,12 +7,11 @@ from initialize import *
 from my_datasets import *
 from my_models import *
 
-EPOCHS = 2
-LR = 0.001
+EPOCHS = 1
 
 def main():
     dataset = load_cifar100
-    model = load_mobilenet
+    model = load_resnet50
 
     # Load data
     train_loader, test_loader, input_shape, num_classes = dataset()

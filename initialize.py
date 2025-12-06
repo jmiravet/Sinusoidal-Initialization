@@ -73,12 +73,23 @@ def sinusoidal_(
         return tensor
 
 def sinusoidal_init(m: nn.Module):
-    gen = torch.Generator().manual_seed(42)
     if isinstance(m, (nn.Linear, nn.Conv1d, nn.Conv2d, nn.Conv3d)):
         if getattr(m, "weight", None) is not None:
-            sinusoidal_(m.weight, generator=gen)
+            sinusoidal_(m.weight)
         if getattr(m, "bias", None) is not None:
             nn.init.zeros_(m.bias)
+    elif isinstance(m, nn.MultiheadAttention):
+        if getattr(m, "q_proj_weight", None) is not None:
+            sinusoidal_(m.q_proj_weight)
+        if getattr(m, "k_proj_weight", None) is not None:
+            sinusoidal_(m.k_proj_weight)
+        if getattr(m, "v_proj_weight", None) is not None:
+            sinusoidal_(m.v_proj_weight)
+        if getattr(m, "in_proj_weight", None) is not None:
+            rows, cols = m.in_proj_weight.shape
+            w = m.in_proj_weight.view(3, rows // 3, cols)
+            for i in range(3):
+                sinusoidal_(w[i])
 
 def orthogonal(module):
     if isinstance(module, nn.Linear) or isinstance(module, nn.Conv2d):
