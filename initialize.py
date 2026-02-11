@@ -11,7 +11,6 @@ _FanMode = Literal["fan_in", "fan_out"]
 
 def sinusoidal_(
     tensor: Tensor,
-    a: float = 0,
     mode: _FanMode = "fan_in",
     gain: float = math.sqrt(2.0),
     generator: _Optional[torch.Generator] = None,
@@ -33,8 +32,6 @@ def sinusoidal_(
         tensor: an n-dimensional :class:`~torch.Tensor` to be filled in-place.
             - For Linear layers: shape ``(out_features, in_features)``
             - For Conv layers: shape ``(out_channels, in_channels, kH, kW)``
-        a (float): the negative slope of the rectifier used after this layer 
-            (only relevant when computing gain for leaky ReLU). Default: 0.
         mode (str): either ``'fan_in'`` (default) or ``'fan_out'``. 
             ``'fan_in'`` preserves forward activation variance, while 
             ``'fan_out'`` preserves gradient variance.
