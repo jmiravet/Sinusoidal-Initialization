@@ -34,6 +34,18 @@ Supported layers:
 
 ---
 
+## 🚀 How to use
+
+Import `sinusoidal_init` and apply it to your PyTorch model:
+
+```python
+from initialize import sinusoidal_init
+
+model.apply(sinusoidal_init)
+```
+
+---
+
 ## 📄 Cite This Work
 
 If you use Sinusoidal Initialization in your research, please cite:
