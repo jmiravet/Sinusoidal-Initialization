@@ -52,9 +52,14 @@ If you use Sinusoidal Initialization in your research, please cite:
 
 ```bibtex
 @inproceedings{fernandez-hernandez2025sinusoidal,
-      title={Sinusoidal Initialization, Time for a New Start},
-      author={Alberto Fern{\'a}ndez-Hern{\'a}ndez and Jose I. Mestre and Manuel F. Dolz and Jos{\'e} Duato and Enrique S. Quintana-Orti},
-      booktitle={The Thirty-ninth Annual Conference on Neural Information Processing Systems},
-      year={2025},
-      url={https://openreview.net/forum?id=FGliQVcrDZ}
+      author = {Fern\'{a}ndez-Hern\'{a}ndez, Alberto and Mestre, Jose and Dolz, Manuel F. and Duato, Jos\'{e} and Quintana-Orti, Enrique},
+      booktitle = {Advances in Neural Information Processing Systems},
+      doi = {10.52202/085713-2285},
+      editor = {D. Belgrave and C. Zhang and H. Lin and R. Pascanu and P. Koniusz and M. Ghassemi and N. Chen},
+      pages = {68045--68073},
+      publisher = {Curran Associates, Inc.},
+      title = {Sinusoidal Initialization, Time for a New Start},
+      url = {https://proceedings.neurips.cc/paper_files/paper/2025/file/621dc667e65dce3ba19d882c7f2df1a7-Paper-Conference.pdf},
+      volume = {38, Main Conference},
+      year = {2025}
 }
